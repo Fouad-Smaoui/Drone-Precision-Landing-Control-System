@@ -59,6 +59,20 @@ uav-design/
 └── README.md               # This file
 ```
 
+## UAV Analysis Notebook
+
+The `uav_analysis_new.ipynb` notebook provides a comprehensive analysis and visualization of the UAV design parameters and performance metrics. It includes:
+
+- Data loading and simulation results visualization
+- Statistical analysis of position, velocity, and acceleration
+- Interactive plots for better understanding of the UAV dynamics
+
+You can run the notebook using Jupyter:
+
+```bash
+jupyter notebook src/python/uav_analysis_new.ipynb
+```
+
 ## Usage
 
 ### Running the Simulation
