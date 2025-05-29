@@ -27,22 +27,33 @@ step_size = 0.01;  % Step size (s)
 
 % Create Simulink Model
 mdl = 'quadrotor_control';
-if ~bdIsLoaded(mdl)
-    new_system(mdl);
+if bdIsLoaded(mdl)
+    close_system(mdl, 0);
 end
+if exist([mdl '.slx'], 'file')
+    delete([mdl '.slx']);
+end
+new_system(mdl);
 open_system(mdl);
 
 % Add blocks for quadrotor dynamics
-add_block('simulink/Continuous/State-Space', [mdl '/Quadrotor Dynamics']);
-add_block('simulink/Math Operations/Matrix Multiply', [mdl '/Control Allocation']);
-add_block('simulink/Continuous/PID Controller', [mdl '/Position Controller']);
-add_block('simulink/Continuous/PID Controller', [mdl '/Attitude Controller']);
-add_block('simulink/Sources/Constant', [mdl '/Platform Position']);
-add_block('simulink/Sources/Constant', [mdl '/Platform Velocity']);
-add_block('simulink/Math Operations/Sum', [mdl '/Position Error']);
-add_block('simulink/Sinks/To Workspace', [mdl '/Position Data']);
-add_block('simulink/Sinks/To Workspace', [mdl '/Attitude Data']);
-add_block('simulink/Sinks/To Workspace', [mdl '/Control Data']);
+add_block('simulink/Continuous/State-Space', [mdl '/Quadrotor Dynamics'], 'Position', [100 100 250 250]);
+add_block('simulink/Math Operations/Product', [mdl '/Control Allocation'], 'Position', [400 100 500 200]);
+add_block('simulink/Continuous/PID Controller', [mdl '/Position Controller'], 'Position', [250 50 350 100]);
+add_block('simulink/Continuous/PID Controller', [mdl '/Attitude Controller'], 'Position', [250 200 350 250]);
+add_block('simulink/Sources/Constant', [mdl '/Platform Position'], 'Position', [50 50 100 100]);
+add_block('simulink/Sources/Constant', [mdl '/Platform Velocity'], 'Position', [50 150 100 200]);
+add_block('simulink/Math Operations/Sum', [mdl '/Position Error'], 'Inputs', '+-', 'Position', [150 50 200 100]);
+add_block('simulink/Sinks/To Workspace', [mdl '/Position Data'], 'Position', [600 50 650 100]);
+add_block('simulink/Sinks/To Workspace', [mdl '/Attitude Data'], 'Position', [600 200 650 250]);
+add_block('simulink/Sinks/To Workspace', [mdl '/Control Data'], 'Position', [600 125 650 175]);
+% Add Selector block to extract position from state vector
+add_block('simulink/Signal Routing/Selector', [mdl '/State Selector'], ...
+    'IndexMode', 'One-based', ...
+    'NumberOfDimensions', '1', ...
+    'IndexOptionArray', 'Index vector (dialog)', ...
+    'Index', '[1 2 3]', ...
+    'Position', [300 100 350 150]);
 
 % Configure quadrotor dynamics
 A = zeros(12, 12);
@@ -71,14 +82,15 @@ set_param([mdl '/Control Data'], 'VariableName', 'control_data');
 
 % Connect blocks
 add_line(mdl, 'Platform Position/1', 'Position Error/1');
-add_line(mdl, 'Quadrotor Dynamics/1', 'Position Error/2');
+add_line(mdl, 'Quadrotor Dynamics/1', 'State Selector/1');
+add_line(mdl, 'State Selector/1', 'Position Error/2');
 add_line(mdl, 'Position Error/1', 'Position Controller/1');
 add_line(mdl, 'Position Controller/1', 'Control Allocation/1');
 add_line(mdl, 'Control Allocation/1', 'Quadrotor Dynamics/1');
 add_line(mdl, 'Quadrotor Dynamics/1', 'Attitude Controller/1');
 add_line(mdl, 'Attitude Controller/1', 'Control Allocation/2');
 add_line(mdl, 'Quadrotor Dynamics/1', 'Position Data/1');
-add_line(mdl, 'Quadrotor Dynamics/7', 'Attitude Data/1');
+add_line(mdl, 'Quadrotor Dynamics/1', 'Attitude Data/1');
 add_line(mdl, 'Control Allocation/1', 'Control Data/1');
 
 % Save model
