@@ -39,7 +39,7 @@ open_system(mdl);
 % Add blocks for quadrotor dynamics
 add_block('simulink/Continuous/State-Space', [mdl '/Quadrotor Dynamics'], 'Position', [100 100 250 250]);
 % Set number of inputs to 4 for thrust and three torques
-add_block('simulink/Math Operations/Product', [mdl '/Control Allocation'], 'Position', [400 100 500 200], 'Inputs', '4');
+add_block('simulink/Math Operations/Product', [mdl '/Control Allocation'], 'Position', [400 100 500 200], 'Inputs', '4', 'Multiplication', 'Matrix simulation');
 add_block('simulink/Continuous/PID Controller', [mdl '/Position Controller'], 'Position', [250 50 350 100]);
 add_block('simulink/Continuous/PID Controller', [mdl '/Attitude Controller'], 'Position', [250 200 350 250]);
 add_block('simulink/Sources/Constant', [mdl '/Platform Position'], 'Position', [50 50 100 100]);
@@ -155,6 +155,9 @@ save_system(mdl);
 
 % Run simulation
 sim(mdl, sim_time);
+
+% Save simulation results for external analysis
+save('simulation_results.mat', 'tout', 'position_data', 'attitude_data', 'control_data');
 
 % Plot results
 figure('Name', 'Quadrotor Landing Simulation Results');
